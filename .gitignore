@@ -1,0 +1,5 @@
+/docdoc/.idea/
+/docdoc.egg-info/
+/dist/
+/build/
+/setup.py
