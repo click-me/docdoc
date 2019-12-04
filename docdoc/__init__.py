@@ -1,14 +1,11 @@
 from sentence_splitter import split_text_into_sentences
-from nltk.stem import PorterStemmer
-from nltk.corpus import stopwords
-import pandas as pd
 import pickle
-import os
 
-ps = PorterStemmer()
-stopwords = stopwords.words('english')
-punctuations = ['.', ',', '/', '_', '-', '+', ';', ':', '(', ')', '[', ']', '*', '\'']
-ignorewords = stopwords + punctuations
+
+with open('docdoc/resource/stopwords.txt') as f:
+    stopwords = f.readlines()
+    punctuations = ['.', ',', '/', '_', '-', '+', ';', ':', '(', ')', '[', ']', '*', '\'']
+    ignorewords = stopwords + punctuations
 
 with open('docdoc/resource/Terms_inventory.pkl', 'rb') as f:
     inventory = pickle.load(f)
