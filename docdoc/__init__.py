@@ -5,11 +5,14 @@ import pandas as pd
 import pickle
 import os
 
-
 ps = PorterStemmer()
-stopwords = set(stopwords.words('english'))
+stopwords = stopwords.words('english')
 punctuations = ['.', ',', '/', '_', '-', '+', ';', ':', '(', ')', '[', ']', '*', '\'']
-ignorewords = list(stopwords) + punctuations
+ignorewords = stopwords + punctuations
+
+with open('docdoc/resource/Terms_inventory.pkl', 'rb') as f:
+    inventory = pickle.load(f)
+    concepts = list(inventory.keys())
 
 
 def find_all(str, substr):
@@ -19,6 +22,44 @@ def find_all(str, substr):
         if start == -1: return
         yield start
         start += len(substr)  # use start += 1 to find overlapping matches
+
+
+def split2sentences(text):
+    sentences = [i for i in split_text_into_sentences(text=text, language='en',
+                                                      non_breaking_prefix_file='docdoc/resource/custom_english_non_breaking_prefixes.txt')
+                 if i != '']
+
+    sentences_index = []
+    start_index = 0
+
+    for sen in sentences:
+        sen_index = text.index(sen.split()[0], start_index)
+        sen_len = len(sen)
+        start_index = sen_index + sen_len
+        sentences_index.append((sen_index, start_index, text[sen_index: start_index]))
+
+    return sentences_index
+
+
+def split2tokens(text):
+    tokens = []
+    start_index = 0
+
+    sentence = text.lower()
+    sentence = separate_punctuation(sentence)
+
+    words = sentence.split()
+    text = text.lower()
+
+    for word in words:
+        word_index = text.index(word, start_index)
+        word_len = len(word)
+        start_index = word_index + word_len
+        tokens.append((word_index, start_index, word))
+
+    return tokens
+
+
 
 
 def separate_punctuation(sentence):
@@ -40,286 +81,41 @@ def separate_punctuation(sentence):
     return sentence
 
 
-def split(text):
-    sentences = [i for i in split_text_into_sentences(text=text, language='en', non_breaking_prefix_file='resource/custom_english_non_breaking_prefixes.txt') if i != '']
+def split2sentences2tokens(text):
+    sentences = split2sentences(text)
 
-    offsets = []
-    offsets_separated_by_sentence = []
-
+    text = text.lower()
+    tokensInText = []
     start_index = 0
 
-    for sentence in sentences:
+    for sent in sentences:
 
-        sentence = sentence.lower()
+        tokensInSentence = []
+
+        sentence = sent[2].lower()
         sentence = separate_punctuation(sentence)
 
-        words = sentence.split()
-        text = text.lower()
+        tokens = sentence.split()
+        for token in sentence.split():
+            token_start = text.index(token, start_index)
+            token_end = token_start + len(token)
+            tokensInSentence.append((token_start, token_end, token))
+            start_index = token_end
 
-        for word in words:
-            word_index = text.index(word, start_index)
-            word_len = len(word)
-            start_index = word_index + word_len
-            offsets.append((word, word_index, start_index))
-            offsets_separated_by_sentence.append((word, word_index, start_index))
+        tokensInText.append(tokensInSentence)
 
-        offsets_separated_by_sentence.append(('***SENTENCE BREAKER***', -1, -1))
-
-    return offsets, offsets_separated_by_sentence
+    return tokensInText
 
 
-def split2tokens(text):
-    tokens = []
-    start_index = 0
-
-    sentence = text.lower()
-    sentence = separate_punctuation(sentence)
-
-    words = sentence.split()
-    text = text.lower()
-
-    for word in words:
-        word_index = text.index(word, start_index)
-        word_len = len(word)
-        start_index = word_index + word_len
-        tokens.append((word, word_index, start_index))
-
-    return tokens
+def supported_concept_type():
+    return concepts
 
 
-# 
-#
-def stemming_match(text, stemmed_term_list):
-    # 1. Raw <-> Stemmed Matching
-    stemmed_text = ' '.join([ps.stem(j) for j in [i[0] for i in split2tokens(text)]])
-    raw_index_list = split2tokens(text)
-    stem_index_list = split2tokens(stemmed_text)
-    ann_list = []
-    for i in range(len(raw_index_list)):
-        ann_list.append((i, stem_index_list[i][0], (stem_index_list[i][1], stem_index_list[i][2]), raw_index_list[i][0],
-                         (raw_index_list[i][1], raw_index_list[i][2])))
-
-    # 2. Get spans of concepts
-    index_list = []
-    for stemmed_term in stemmed_term_list:
-        start_index_list = list(find_all(stemmed_text, ' ' + stemmed_term + " "))
-        for i in start_index_list:
-            index_list.append((i + 1, i + 1 + len(stemmed_term)))
-
-    # 3. Remove duplicates and overlapping
-    index_list = list(set(index_list))
-    index_list = sorted(index_list)
-    index_list = list(dict(index_list).items())
-    new_index_list = []
-    for i in range(len(index_list)):
-        if (i == 0):
-            new_index_list.append(index_list[i])
-        else:
-            if index_list[i][1] > index_list[i - 1][1]:
-                new_index_list.append(index_list[i])
-    index_list = new_index_list
-
-    # 4. Get full annotations
-    new_ann_list = []
-    for ann in ann_list:
-        token_index = ann[0]
-        index = ann[2]
-
-        label = 'O'
-        for var in index_list:
-            if index[0] < var[0]:
-                break
-            if index[0] == var[0]:
-                label = 'B'
-                break
-            if index[0] > var[0] and index[1] <= var[1]:
-                label = 'I'
-                break
-        new_ann_list.append((token_index, ann[1], ann[2], ann[3], ann[4], label))
-    ann_list = new_ann_list
-
-    return ann_list
-
-
-def generate_instances_stemming(text, stemmed_terms):
-    ann_list = stemming_match(text, stemmed_terms)
-    label_list = [i[5] for i in ann_list]
-    BI_token_index = [i[0] for i in ann_list if (i[-1] == 'B' or i[-1] == 'I')]
-
-    sentences = [i for i in split_text_into_sentences(text=text, language='en', non_breaking_prefix_file='resource/custom_english_non_breaking_prefixes.txt') if i != '']
-    split_token_index = []
-    labels = []
-    sentences_chosen_list = []
-
-    curr_index = 0
-
-    for i in range(len(sentences)):
-        sentence = sentences[i]
-        split_token_index.append((curr_index, curr_index + len(split2tokens(sentence))))
-        labels.append(label_list[curr_index: curr_index + len(split2tokens(sentence))])
-        for token_idx in BI_token_index:
-            if curr_index <= token_idx < curr_index + len(split2tokens(sentence)):
-                sentences_chosen_list.append(i)
-                break
-        curr_index = curr_index + len(split2tokens(sentence))
-
-    # Generate training instances
-    data_instances = []
-    for i in sentences_chosen_list:
-        sentence = sentences[i]
-        label = labels[i]
-        if label[0] == 'I':
-            del data_instances[-1]
-            sentence = sentences[i - 1] + ' ' + sentence
-            label = labels[i - 1] + label
-        data_instances.append(([i[0] for i in split2tokens(sentence)], label))
-
-    return data_instances
-
-
-def exact_match(text, terms):
-    # 1. Tokenize 
-    text = text.lower()
-    token_list = split2tokens(text)
-    ann_list = [(i, token_list[i][0], (token_list[i][1], token_list[i][2])) for i in range(len(token_list))]
-
-    # 2. Get spans of concepts
-    index_list = []
-    for term in terms:
-        start_index_list = list(find_all(text, " " + term + " "))
-        for i in start_index_list:
-            index_list.append((i + 1, i + 1 + len(term)))
-
-    # 3. Remove duplicates and overlapping
-    index_list = list(set(index_list))
-    index_list = sorted(index_list)
-    index_list = list(dict(index_list).items())
-    new_index_list = []
-    for i in range(len(index_list)):
-        if i == 0:
-            new_index_list.append(index_list[i])
-        else:
-            if index_list[i][1] > index_list[i - 1][1]:
-                new_index_list.append(index_list[i])
-    index_list = new_index_list
-
-    # 4. Get full annotations
-    new_ann_list = []
-    for ann in ann_list:
-        index = ann[2]
-
-        label = 'O'
-        for var in index_list:
-
-            if index[0] < var[0]:
-                break
-            if index[0] == var[0]:
-                label = 'B'
-                break
-            if index[0] > var[0] and index[1] <= var[1]:
-                label = 'I'
-                break
-        new_ann_list.append((ann[0], ann[1], ann[2], label))
-    ann_list = new_ann_list
-
-    return ann_list
-
-
-def generate_instances_exact(text, terms):
-    ann_list = exact_match(text, terms)
-    label_list = [i[3] for i in ann_list]
-    BI_token_index = [i[0] for i in ann_list if (i[-1] == 'B' or i[-1] == 'I')]
-
-    sentences = [i for i in split_text_into_sentences(text=text, language='en',
-                                                      non_breaking_prefix_file='resource/custom_english_non_breaking_prefixes.txt')
-                 if i != '']
-    split_token_index = []
-    labels = []
-    sentences_chosen_list = []
-
-    curr_index = 0
-
-    for i in range(len(sentences)):
-        sentence = sentences[i]
-        split_token_index.append((curr_index, curr_index + len(split2tokens(sentence))))
-        labels.append(label_list[curr_index: curr_index + len(split2tokens(sentence))])
-        for token_idx in BI_token_index:
-            if curr_index <= token_idx and token_idx < curr_index + len(split2tokens(sentence)):
-                sentences_chosen_list.append(i)
-                break
-        curr_index = curr_index + len(split2tokens(sentence))
-
-    # Generate training instances
-    data_instances = []
-    for i in sentences_chosen_list:
-        sentence = sentences[i]
-        label = labels[i]
-        if label[0] == 'I':
-            del data_instances[-1]
-            sentence = sentences[i - 1] + ' ' + sentence
-            label = labels[i - 1] + label
-        data_instances.append(([i[0] for i in split2tokens(sentence)], label))
-
-    return data_instances
-
-
-def build_concept_inventory(concept_type, snomed_path, word2remove_pickle):
-    ps = PorterStemmer()
-
-    df = pd.read_csv(snomed_path)
-    with open(word2remove_pickle, "rb") as f:
-        ambiguous_terms = pickle.load(f)
-
-    df = df[(df.type == concept_type) & (~df['term'].isin(ambiguous_terms))]
-
-    df = pd.DataFrame(data={'conceptId': df['conceptId'],
-                            'term': df['term'].map(lambda x: separate_punctuation(x).lower())})
-    df['stem_term'] = df['term'].map(lambda x: ' '.join([ps.stem(i) for i in x.split()]))
-    df['compare'] = [' '.join(sorted([n for n in i.split() if n not in ignorewords])) for i in
-                     df['stem_term'].to_list()]
-    df.to_csv("Terms/SNOMED_%s.csv" % concept_type.replace(' ', '_'), index=False)
-
-
-def generate_data_instances_for_concept(corpus_df, concept_type, method, update_rate):
-    df = pd.read_csv("SNOMED_%s.csv" % concept_type.replace(' ', '_'))
-    terms = df['term'].to_list()
-    stemmed_terms = [i for i in df['stem_term'].to_list() if i not in stopwords]
-
-    # 1. Read cache
-    instances_list = [i for i in os.listdir() if
-                      i.startswith('instances_%s_%s_' % (concept_type.replace(' ', '_'), method))]
-    numbers = [int(i.split('.')[0][12 + len(concept_type) + len(method):]) for i in instances_list]
-
-    if numbers != []:
-        numbers.sort()
-        number = numbers[-1]
-        with open("instances_%s_%s_%s.pkl" % (concept_type.replace(' ', '_'), method, str(number)), "rb") as f:
-            instances = pickle.load(f)
-    else:
-        number = 0
-        instances = []
-
-    # 2. Generate new
-    for index, row in corpus_df.iterrows():
-        row_id = row['ROW_ID']
-        if row_id <= number:
-            continue
-        text = row['TEXT']
-
-        if method == 'exact':
-            instances = instances + generate_instances_exact(text, terms)
-        elif method == 'stemming':
-            instances = instances + generate_instances_stemming(text, stemmed_terms)
-        else:
-            break
-
-        if int(row_id) % update_rate == 0:
-            with open("instances_%s_%s_%s.pkl" % (concept_type.replace(' ', '_'), method, str(row_id)), 'wb') as f:
-                pickle.dump(instances, f)
-            print(row_id)
-
-
-def n_grams_match(text, inventory, concept_types):
+def n_grams_match(text, concept_types):
+    
+    assert isinstance(concept_types, list), "Argument \'concept_types\' should be a list"
+    assert set(concept_types).issubset(set(concepts)), "invalid concept types, please use method \'supported_concept_type()\' to check supported concept types"
+    
     # 1. Tokenize
     text = text.lower()
     token_list = split2tokens(text)
@@ -339,10 +135,10 @@ def n_grams_match(text, inventory, concept_types):
         segment_list = []
         for N in range(2, 6):
             grams = [token_list[i:i + N] for i in range(len(token_list) - N + 1)]
-            segment_list += [([n[0] for n in i], i[0][1], i[-1][2]) for i in grams
-                             if (i[0][0] not in ignorewords
-                                 and (i[-1][0] not in ignorewords)
-                                 and len(set([j[0] for j in i]).intersection(set(punctuations))) == 0)]
+            segment_list += [([n[2] for n in i], i[0][0], i[-1][1]) for i in grams
+                             if (i[0][2] not in ignorewords
+                                 and (i[-1][2] not in ignorewords)
+                                 and len(set([j[2] for j in i]).intersection(set(punctuations))) == 0)]
 
         for i in segment_list:
             if ' '.join(sorted([ps.stem(n) for n in i[0] if n not in ignorewords])) in terms['compare']:
@@ -351,12 +147,12 @@ def n_grams_match(text, inventory, concept_types):
     return output
 
 
-def n_grams_match_sentence(text, inventory, concept_types):
+def n_grams_match_by_sentence(text, concept_types):
     # 0. Format text
     text = remove_fake_line_breaker(text)
-    
+
     # 1. Match entities
-    ents_by_type = n_grams_match(text, inventory, concept_types)
+    ents_by_type = n_grams_match(text, concept_types)
 
     # 2. Sort entities
     ents = []
@@ -365,21 +161,9 @@ def n_grams_match_sentence(text, inventory, concept_types):
     ents = sorted(ents, key=lambda i: i['start'])
 
     # 3. Split sentences
-    sentences = [i for i in split_text_into_sentences(text=text, language='en',
-                                                      non_breaking_prefix_file='resource/custom_english_non_breaking_prefixes.txt')
-                 if i != '']
+    sentences_index = [(i[0], i[1]) for i in split2sentences(text)]
 
-    # 4. Index sentence 
-    sentences_index = []
-    start_index = 0
-
-    for sen in sentences:
-        sen_index = text.index(sen.split()[0], start_index)
-        sen_len = len(sen)
-        start_index = sen_index + sen_len
-        sentences_index.append((sen_index, start_index))
-
-    # 5. Group entities
+    # 4. Group entities
     ents_by_sen = [[] for i in range(len(sentences_index))]
     sen_index = 0
     for ent in ents:
@@ -388,7 +172,7 @@ def n_grams_match_sentence(text, inventory, concept_types):
         if sentences_index[sen_index][0] < ent['start'] and ent['end'] < sentences_index[sen_index][1]:
             ents_by_sen[sen_index].append(ent)
 
-    # 6. Reindex entities
+    # 5. Reindex entities
     ents_per_sen = []
 
     for i in range(len(ents_by_sen)):
