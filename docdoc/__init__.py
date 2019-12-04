@@ -1,13 +1,15 @@
 from sentence_splitter import split_text_into_sentences
 import pickle
+from pathlib import Path
 
+resource_folder = Path("docdoc/resource/")
 
-with open('docdoc/resource/stopwords.txt') as f:
+with open(resource_folder / "stopwords.txt") as f:
     stopwords = f.readlines()
     punctuations = ['.', ',', '/', '_', '-', '+', ';', ':', '(', ')', '[', ']', '*', '\'']
     ignorewords = stopwords + punctuations
 
-with open('docdoc/resource/Terms_inventory.pkl', 'rb') as f:
+with open(resource_folder / 'Terms_inventory.pkl', 'rb') as f:
     inventory = pickle.load(f)
     concepts = list(inventory.keys())
 
@@ -23,7 +25,7 @@ def find_all(str, substr):
 
 def split2sentences(text):
     sentences = [i for i in split_text_into_sentences(text=text, language='en',
-                                                      non_breaking_prefix_file='docdoc/resource/custom_english_non_breaking_prefixes.txt')
+                                                      non_breaking_prefix_file= resource_folder / 'custom_english_non_breaking_prefixes.txt')
                  if i != '']
 
     sentences_index = []
@@ -55,8 +57,6 @@ def split2tokens(text):
         tokens.append((word_index, start_index, word))
 
     return tokens
-
-
 
 
 def separate_punctuation(sentence):
@@ -109,10 +109,10 @@ def supported_concept_type():
 
 
 def n_grams_match(text, concept_types):
-    
     assert isinstance(concept_types, list), "Argument \'concept_types\' should be a list"
-    assert set(concept_types).issubset(set(concepts)), "invalid concept types, please use method \'supported_concept_type()\' to check supported concept types"
-    
+    assert set(concept_types).issubset(set(
+        concepts)), "invalid concept types, please use method \'supported_concept_type()\' to check supported concept types"
+
     # 1. Tokenize
     text = text.lower()
     token_list = split2tokens(text)
