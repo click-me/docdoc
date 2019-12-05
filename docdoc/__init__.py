@@ -1,17 +1,19 @@
+from nltk.stem import PorterStemmer
 from sentence_splitter import split_text_into_sentences
 import pickle
-from pathlib import Path
+import pkg_resources
 
-resource_folder = Path("docdoc/resource/")
 
-with open(resource_folder / "stopwords.txt") as f:
+with open(pkg_resources.resource_filename(__name__, 'resource/stopwords.txt')) as f:
     stopwords = f.readlines()
     punctuations = ['.', ',', '/', '_', '-', '+', ';', ':', '(', ')', '[', ']', '*', '\'']
     ignorewords = stopwords + punctuations
 
-with open(resource_folder / 'Terms_inventory.pkl', 'rb') as f:
+with open(pkg_resources.resource_filename(__name__, 'resource/Terms_inventory.pkl'), 'rb') as f:
     inventory = pickle.load(f)
     concepts = list(inventory.keys())
+
+ps = PorterStemmer()
 
 
 def find_all(str, substr):
@@ -25,7 +27,7 @@ def find_all(str, substr):
 
 def split2sentences(text):
     sentences = [i for i in split_text_into_sentences(text=text, language='en',
-                                                      non_breaking_prefix_file= resource_folder / 'custom_english_non_breaking_prefixes.txt')
+                                                      non_breaking_prefix_file= pkg_resources.resource_filename(__name__, 'resource/custom_english_non_breaking_prefixes.txt'))
                  if i != '']
 
     sentences_index = []
@@ -92,7 +94,6 @@ def split2sentences2tokens(text):
         sentence = sent[2].lower()
         sentence = separate_punctuation(sentence)
 
-        tokens = sentence.split()
         for token in sentence.split():
             token_start = text.index(token, start_index)
             token_end = token_start + len(token)
