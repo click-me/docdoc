@@ -28,12 +28,13 @@ def find_all(str, substr):
 def split2sentences(text):
     sentences = [i for i in split_text_into_sentences(text=text, language='en',
                                                       non_breaking_prefix_file= pkg_resources.resource_filename(__name__, 'resource/custom_english_non_breaking_prefixes.txt'))
-                 if i not in ['', '\t']]
+                 if i.strip() != '']
 
     sentences_index = []
     start_index = 0
 
     for sen in sentences:
+        sen = sen.strip()
         sen_index = text.index(sen.split()[0], start_index)
         sen_len = len(sen)
         start_index = sen_index + sen_len
