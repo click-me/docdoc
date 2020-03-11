@@ -57,6 +57,33 @@ def split2tokens(text):
     return output_tokens
 
 
+def tokenIdx2charIdx(token_seq, label_seq):
+    # 0-->B
+    # 1-->I
+    # 2-->O
+
+    assert len(token_seq) == len(label_seq), "The length of \'token_seq\' is not equal to that of \'label_seq\'"
+    assert token_seq != [] and (type(token_seq[0]) is tuple) and len(token_seq[0]) == 3, "Invalid argumant \'token_seq\', please use \'docdoc.split2tokens\' to generate a valid \'token_seq\' variable"
+
+    # 1. Get indices of target tokens
+    label_seq = np.array(label_seq)
+    tokenIdx_BI = np.where(label_seq != 2)[0]
+
+    # 2. Get token-level indices of entities
+    entity_tokenIdx = []
+    for k, g in groupby(enumerate(tokenIdx_BI), lambda ix: ix[0] - ix[1]):
+        entity_tokenIdx.append(list(map(itemgetter(1), g)))
+
+    # 3. Get character-level indices of entities
+    entity_charIdx = []
+    for var in entity_tokenIdx:
+        begin_index = token_seq[var[0]][0]
+        end_index = token_seq[var[-1]][1]
+        entity_charIdx.append((begin_index, end_index))
+
+    return entity_charIdx
+
+
 def separate_punctuation(sentence):
     sentence = sentence.replace('.', ' . ')
     sentence = sentence.replace(',', ' , ')
