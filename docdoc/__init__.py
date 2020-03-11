@@ -11,7 +11,7 @@ with open(pkg_resources.resource_filename(__name__, 'resource/stopwords.txt')) a
 
 with open(pkg_resources.resource_filename(__name__, 'resource/Terms_inventory.pkl'), 'rb') as f:
     inventory = pickle.load(f)
-    concepts = list(inventory.keys())
+    #concepts = list(inventory.keys())
 
 ps = PorterStemmer()
 
@@ -25,41 +25,36 @@ def find_all(str, substr):
         start += len(substr)  # use start += 1 to find overlapping matches
 
 
-def split2sentences(text):
-    sentences = [i for i in split_text_into_sentences(text=text, language='en',
-                                                      non_breaking_prefix_file= pkg_resources.resource_filename(__name__, 'resource/custom_english_non_breaking_prefixes.txt'))
+def split2sentences2tokens(text):
+    sentences = [i for i in split_text_into_sentences(text=text, language='en', non_breaking_prefix_file=pkg_resources.resource_filename(__name__, 'resource/custom_english_non_breaking_prefixes.txt'))
                  if i.strip() != '']
 
-    sentences_index = []
-    start_index = 0
+    output_sentences = []
+    next_sentence_start_index = 0
 
     for sen in sentences:
-        sen = sen.strip()
-        sen_index = text.index(sen.split()[0], start_index)
-        sen_len = len(sen)
-        start_index = sen_index + sen_len
-        sentences_index.append((sen_index, start_index, text[sen_index: start_index]))
+        next_token_start_index = next_sentence_start_index
+        temp = []
+        tokens = sen.strip().split()
+        for tok in tokens:
+            token_index = text.index(tok, next_token_start_index)
+            next_token_start_index = token_index + len(tok)
+            temp.append((token_index, next_token_start_index, tok))
+        output_sentences.append(temp)
+        next_sentence_start_index = temp[-1][1]
 
-    return sentences_index
+    return output_sentences
+
+def split2sentences(text):
+    output_sentences = split2sentences2tokens(text)
+    out_raw_sentences = [(var[0][0], var[-1][1], text[var[0][0]:var[-1][1]]) for var in output_sentences]
+    return out_raw_sentences
 
 
 def split2tokens(text):
-    tokens = []
-    start_index = 0
-
-    sentence = text.lower()
-    sentence = separate_punctuation(sentence)
-
-    words = sentence.split()
-    text = text.lower()
-
-    for word in words:
-        word_index = text.index(word, start_index)
-        word_len = len(word)
-        start_index = word_index + word_len
-        tokens.append((word_index, start_index, word))
-
-    return tokens
+    output_sentences = split2sentences2tokens(text)
+    output_tokens = sum(output_sentences, [])
+    return output_tokens
 
 
 def separate_punctuation(sentence):
@@ -81,39 +76,13 @@ def separate_punctuation(sentence):
     return sentence
 
 
-def split2sentences2tokens(text):
-    sentences = split2sentences(text)
-
-    text = text.lower()
-    tokensInText = []
-    start_index = 0
-
-    for sent in sentences:
-
-        tokensInSentence = []
-
-        sentence = sent[2].lower()
-        sentence = separate_punctuation(sentence)
-
-        for token in sentence.split():
-            token_start = text.index(token, start_index)
-            token_end = token_start + len(token)
-            tokensInSentence.append((token_start, token_end, token))
-            start_index = token_end
-
-        tokensInText.append(tokensInSentence)
-
-    return tokensInText
-
-
 def supported_concept_type():
-    return concepts
+    return list(inventory.keys())
 
 
 def n_grams_match(text, concept_types):
     assert isinstance(concept_types, list), "Argument \'concept_types\' should be a list"
-    assert set(concept_types).issubset(set(
-        concepts)), "invalid concept types, please use method \'supported_concept_type()\' to check supported concept types"
+    assert set(concept_types).issubset(set(list(inventory.keys()))), "invalid concept types, please use method \'supported_concept_type()\' to check supported concept types"
 
     # 1. Tokenize
     text = text.lower()
