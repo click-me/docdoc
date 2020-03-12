@@ -2,7 +2,7 @@
 /docdoc.egg-info/
 /dist/
 /build/
-#/setup.py
+/setup.py
 /docdoc/.ipynb_checkpoints/
 /.ipynb_checkpoints/
 /docdoc/00176-102920-ECHO_REPORT.txt
