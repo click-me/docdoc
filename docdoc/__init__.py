@@ -29,9 +29,9 @@ def find_all(str, substr):
 
 def split2sentences2tokens(text):
 
-    text = text.lower()
-    sentences = [separate_punctuation(i) for i in split_text_into_sentences(text=text, language='en', non_breaking_prefix_file=pkg_resources.resource_filename(__name__, 'resource/custom_english_non_breaking_prefixes.txt'))
+    sentences = [separate_punctuation(i.lower()) for i in split_text_into_sentences(text=text, language='en', non_breaking_prefix_file=pkg_resources.resource_filename(__name__, 'resource/custom_english_non_breaking_prefixes.txt'))
                  if i.strip() != '']
+    text = text.lower()
 
     output_sentences = []
     next_sentence_start_index = 0
