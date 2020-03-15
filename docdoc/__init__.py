@@ -12,7 +12,7 @@ with open(pkg_resources.resource_filename(__name__, 'resource/stopwords.txt')) a
     PUNCTUATIONS = ['.', ',', '/', '_', '-', '+', ';', ':', '(', ')', '[', ']', '*', '\'']
     IGNOREWORDS = STOPWORDS + PUNCTUATIONS
 
-with open(pkg_resources.resource_filename(__name__, 'resource/terms_inventory.pkl'), 'rb') as f:
+with open(pkg_resources.resource_filename(__name__, 'resource/Terms_inventory.pkl'), 'rb') as f:
     INVENTORY = pickle.load(f)
 
 ps = PorterStemmer()
