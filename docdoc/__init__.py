@@ -156,7 +156,7 @@ def n_grams_match(text, terms, N):
         seg_endIdx = seg[1]
         while seg_endIdx > sentences_spans[sen_index][1]:
             sen_index += 1
-        if sentences_spans[sen_index][0] < seg_startIdx and seg_endIdx < sentences_spans[sen_index][1]:
+        if sentences_spans[sen_index][0] <= seg_startIdx and seg_endIdx <= sentences_spans[sen_index][1]:
             segments_by_sentence[sen_index].append(seg)
 
     # 4. Reindex entities
