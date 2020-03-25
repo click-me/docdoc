@@ -87,6 +87,34 @@ def tokenIdx2charIdx(token_seq, label_seq):
 
     return entity_charIdx
 
+def split_tokenIdx2charIdx(token_seq, label_seq):
+    # 0-->B
+    # 1-->I
+    # 2-->O
+    assert isinstance(token_seq, list), "The argument \'token_seq\' should be a list"
+    assert isinstance(label_seq, list), "The argument \'label_seq\' should be a list"
+
+    # 1. Get indices of target tokens
+    tokenIdx_BI = [np.where(np.array(i) != 2)[0] for i in label_seq]
+
+    # 2. Get token-level indices of entities
+    split_entity_tokenIdx = []
+    for i in tokenIdx_BI:
+        entity_tokenIdx = []
+        for k, g in groupby(enumerate(i), lambda ix: ix[0] - ix[1]):
+            entity_tokenIdx.append(list(map(itemgetter(1), g)))
+        split_entity_tokenIdx.append(entity_tokenIdx)
+
+    # 3. Get character-level indices of entities
+    entity_charIdx = []
+    for i in range(len(split_entity_tokenIdx)):
+        if split_entity_tokenIdx[i] != []:
+            tokens = token_seq[i]
+            for var in split_entity_tokenIdx[i]:
+                begin_index = tokens[var[0]][0]
+                end_index = tokens[var[-1]][1]
+                entity_charIdx.append((begin_index, end_index))
+    return entity_charIdx
 
 def separate_punctuation(sentence):
     for var in PUNCTUATIONS:
