@@ -126,14 +126,19 @@ def supported_concept_type():
     return list(INVENTORY.keys())
 
 
-
 def remove_fake_line_breaker(text):
+    def is_fake_line_breaker(text, i):
+        if text[i + 1].islower():
+            return True
+        if text[i - 1] in [',']:
+            return True
+        return False
+
     fake_breakers = []
+    text = text.strip()
     breakers = [i for i in find_all(text, '\n')]
     for i in breakers:
-        if i == breakers[-1] or (i + 1) in breakers:
-            continue
-        if (not text[i + 1].isupper()) or text[i - 1] == ',':
+        if is_fake_line_breaker(text, i):
             fake_breakers.append(i)
     for i in fake_breakers:
         text = text[:i] + ' ' + text[i + 1:]
