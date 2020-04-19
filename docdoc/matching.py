@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 from nltk.stem import PorterStemmer
 import pkg_resources
 from docdoc import find_all
@@ -8,6 +12,7 @@ with open(pkg_resources.resource_filename(__name__, 'resource/stopwords.txt')) a
     IGNOREWORDS = STOPWORDS + PUNCTUATIONS
 
 ps = PorterStemmer()
+
 
 def n_grams_match(text, terms, tokenizer, N):
     # 1. Tokenize

@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 def generate_instances_for_NER(split_sentences_tokens, entities_spans):
     """ Generate training instances for NER tasks from (1)split_sentences_tokens and (2)entities_spans.

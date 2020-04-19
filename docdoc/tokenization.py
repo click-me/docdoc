@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 from sentence_splitter import split_text_into_sentences
 import pkg_resources
 from spacy.lang.en import English
