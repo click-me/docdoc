@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="docdoc", # Replace with your own username
-    version="0.0.28",
+    name="docdoc",
+    version="0.0.29",
     author="Enno",
     author_email="hi.xiaolonghuang@gmail.com",
     description="A tool to handle documents",
@@ -22,7 +22,9 @@ setuptools.setup(
     install_requires=[
         'sentence_splitter==1.4',
         'nltk==3.4.5',
-        'numpy==1.18.1'
+        'numpy==1.18.1',
+        'bert-tensorflow==1.0.1',
+        'spacy==2.2.4'
     ],
     include_package_data = True
 )

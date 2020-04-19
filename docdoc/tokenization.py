@@ -16,13 +16,21 @@ class DocumentTokenizer(object):
         self.tokenizer = tokenizer_class_dict.get(tokenizer, tokenization.BasicTokenizer)(do_lower_case)
         self.do_lower_case = do_lower_case
 
-    def tokenize(self, text):
+    def split2sentences2tokens(self, text):
+        """Splits a document text into a list of sentences, and splits each sentence into a list of tokens.
+            For example:
+              input = "Hello. It's me."
+              output = [[(0, 5, 'Hello'), (5, 6, '.')],
+                        [(7, 9, 'It'), (9, 10, "'"), (10, 11, 's'), (12, 14, 'me'), (14, 15, '.')]]
+            Args:
+              text: A single text string needed to be split.
+            Returns:
+              A list of tokens-list.
+        """
         sentences = self.sentence_splitter_fn(text=text, do_lower_case=self.do_lower_case)
-
         if self.do_lower_case:
             text = text.lower()
-
-        output_sentences = []
+        split_sentences = []
         next_sentence_start_index = 0
 
         for sen in sentences:
@@ -33,10 +41,22 @@ class DocumentTokenizer(object):
                 token_index = text.index(tok, next_token_start_index)
                 next_token_start_index = token_index + len(tok)
                 temp.append((token_index, next_token_start_index, tok))
-            output_sentences.append(temp)
+            split_sentences.append(temp)
             next_sentence_start_index = temp[-1][1]
 
+        return split_sentences
+
+    def split2sentences(self, text):
+        """ Splits a document text into a list of sentences"""
+        split_sentences = self.split2sentences2tokens(text)
+        output_sentences = [(var[0][0], var[-1][1], text[var[0][0]:var[-1][1]]) for var in split_sentences]
         return output_sentences
+
+    def split2tokens(self, text):
+        """ Splits a document text into a list of tokens"""
+        split_sentences = self.split2sentences2tokens(text)
+        output_tokens = sum(split_sentences, [])
+        return output_tokens
 
 
 def default_sentence_splitter(text, do_lower_case=True):
