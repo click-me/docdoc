@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from sentence_splitter import split_text_into_sentences
 import pkg_resources
+import bert
 from spacy.lang.en import English
 from bert import tokenization
 
@@ -85,7 +86,14 @@ def spacy_sentence_splitter(text, do_lower_case=True):
         return [i for i in split_sentences if i.strip() != '']
 
 
+try:
+    # if have 'bert-tensorflow' installed
+    bert_basic_tokenizer = tokenization.BasicTokenizer
+except:
+    # if have 'bert-for-tf2' installed
+    bert_basic_tokenizer = bert.bert_tokenization.BasicTokenizer
+
 sentence_splitter_dict = {"default_sentence_splitter": default_sentence_splitter,
                           "spacy_sentence_splitter": spacy_sentence_splitter}
 
-tokenizer_class_dict = {"bert_basic_tokenizer": tokenization.BasicTokenizer}
+tokenizer_class_dict = {"bert_basic_tokenizer": bert_basic_tokenizer}
