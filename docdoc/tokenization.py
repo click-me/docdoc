@@ -18,7 +18,7 @@ class DocumentTokenizer(object):
     def __init__(self, sentence_splitter='spacy_sentence_splitter', tokenizer='bert_basic_tokenizer',
                  do_lower_case=True):
         self.sentence_splitter_fn = sentence_splitter_dict.get(sentence_splitter, spacy_sentence_splitter)
-        self.tokenizer = tokenizer_class_dict.get(tokenizer, tokenization.BasicTokenizer)(do_lower_case)
+        self.tokenizer = tokenizer_class_dict.get(tokenizer, bert_basic_tokenizer)(do_lower_case)
         self.do_lower_case = do_lower_case
 
     def split2sentences2tokens(self, text):
