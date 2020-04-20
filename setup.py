@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="docdoc",
-    version="0.0.32",
+    version="0.0.33",
     author="Enno",
     author_email="hi.xiaolonghuang@gmail.com",
     description="A tool to handle documents",

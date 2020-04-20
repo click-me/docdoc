@@ -40,3 +40,4 @@ def generate_instances_for_NER(split_sentences_tokens, entities_spans):
                     break
             sentence_labels.append(token_label)
         generated_instances.append((sentence_tokens, sentence_labels))
+    return generated_instances
