@@ -16,7 +16,7 @@ ps = PorterStemmer()
 
 def n_grams_match(text, terms, tokenizer, N):
     # 1. Tokenize
-    text = remove_fake_line_breaker(text)
+    #text = remove_fake_line_breaker(text)
     tokens = tokenizer.split2tokens(text)
 
     # 2. Matching
