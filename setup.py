@@ -23,7 +23,7 @@ setuptools.setup(
         'sentence_splitter==1.4',
         'nltk==3.4.5',
         'numpy==1.18.3',
-        'bert-tensorflow==1.0.1',
+        'bert-for-tf2==0.14.4',
         'spacy==2.2.4'
     ],
     include_package_data = True
