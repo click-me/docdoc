@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="docdoc",
-    version="0.0.35",
+    version="0.0.37",
     author="Enno",
     author_email="hi.xiaolonghuang@gmail.com",
     description="A tool to handle documents",
@@ -20,11 +20,11 @@ setuptools.setup(
     ],
     python_requires='>=3.7',
     install_requires=[
-        'sentence_splitter==1.4',
-        'nltk==3.4.5',
-        'numpy==1.18.3',
-        'bert-for-tf2==0.14.4',
-        'spacy==2.2.4'
+        'sentence_splitter>=1.4',
+        'nltk>=3.4.5',
+        'numpy>=1.18.3',
+        'bert-for-tf2>=0.14.4',
+        'spacy>=2.2.4'
     ],
     include_package_data = True
 )

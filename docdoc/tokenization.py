@@ -80,7 +80,7 @@ def spacy_sentence_splitter(text, do_lower_case=True):
     # for line in lines:
     #     if line.strip() != '':
     #         split_sentences.extend([sent.string.strip() for sent in nlp(line).sents])
-    split_sentences = [i.string.strip() for i in self.nlp(text).sents if i.string.strip() != ""]
+    split_sentences = [i.string.strip() for i in nlp(text).sents if i.string.strip() != ""]
     if do_lower_case:
         return [i.lower() for i in split_sentences if i.strip() != '']
     else:
