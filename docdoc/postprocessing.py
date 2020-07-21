@@ -24,7 +24,7 @@ def tokenIdx2charIdx(tokens_seq, labels_seq, group_by_sentence=True):
     """
     if group_by_sentence:
         # 1. Get token-level indices of target tokens
-        tokenIdx_BI = [np.where(np.array(i) != 'O')[0] for i in labels_seq]
+        tokenIdx_BI = [np.where(np.array(i) in ['B', 'I'])[0] for i in labels_seq]
 
         # 2. Get token-level indices of entities
         split_entity_tokenIdx = []
@@ -46,7 +46,7 @@ def tokenIdx2charIdx(tokens_seq, labels_seq, group_by_sentence=True):
         return entity_charIdx
     else:
         # 1. Get token-level indices of target tokens
-        tokenIdx_BI = np.where(np.array(labels_seq) != 'O')[0]
+        tokenIdx_BI = np.where(np.array(labels_seq) in ['B', 'I'])[0]
 
         # 2. Get token-level indices of entities
         entity_tokenIdx = []
